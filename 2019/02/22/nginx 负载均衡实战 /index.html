@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+
+<html class="theme-next pisces use-motion" lang>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="nginx,">
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Linux 运维" type="application/atom+xml">
+
+
+
+
+
+
+<meta name="description" content="准备三个文件[my.cnf、二进制编译文件mysql-5.6.34-linux-glibc2.5-x86_64.tar.gz、mysql-install.sh] 1、vim my.cnf 1234567891011121314[mysqld]socket=/var/lib/mysql/mysql.sockuser=mysqlsymbolic-links=0datadir=/data/mysqlin">
+<meta name="keywords" content="nginx">
+<meta property="og:type" content="article">
+<meta property="og:title" content="nginx负载均衡实现（nginx+php+mysql）实战">
+<meta property="og:url" content="http://yoursite.com/2019/02/22/nginx 负载均衡实战 /index.html">
+<meta property="og:site_name" content="Linux 运维">
+<meta property="og:description" content="准备三个文件[my.cnf、二进制编译文件mysql-5.6.34-linux-glibc2.5-x86_64.tar.gz、mysql-install.sh] 1、vim my.cnf 1234567891011121314[mysqld]socket=/var/lib/mysql/mysql.sockuser=mysqlsymbolic-links=0datadir=/data/mysqlin">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-02-22T00:53:43.600Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="nginx负载均衡实现（nginx+php+mysql）实战">
+<meta name="twitter:description" content="准备三个文件[my.cnf、二进制编译文件mysql-5.6.34-linux-glibc2.5-x86_64.tar.gz、mysql-install.sh] 1、vim my.cnf 1234567891011121314[mysqld]socket=/var/lib/mysql/mysql.sockuser=mysqlsymbolic-links=0datadir=/data/mysqlin">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/02/22/nginx 负载均衡实战 /">
+
+
+
+<script>(function(T,h,i,n,k,P,a,g,e){g=function(){P=h.createElement(i);a=h.getElementsByTagName(i)[0];P.src=k;P.charset="utf-8";P.async=1;a.parentNode.insertBefore(P,a)};T["ThinkPageWeatherWidgetObject"]=n;T[n]||(T[n]=function(){(T[n].q=T[n].q||[]).push(arguments)});T[n].l=+new Date();if(T.attachEvent){T.attachEvent("onload",g)}else{T.addEventListener("load",g,false)}}(window,document,"script","tpwidget","//widget.seniverse.com/widget/chameleon.js"))</script>
+<script>tpwidget("init", {
+    "flavor": "bubble",
+    "location": "WTW3SJ5ZBJUY",
+    "geolocation": "enabled",
+    "position": "top-left",
+    "margin": "10px 10px",
+    "language": "zh-chs",
+    "unit": "c",
+    "theme": "chameleon",
+    "uid": "U4F2547B10",
+    "hash": "d49c6de3fe37062a9b1db42177056f08"
+});
+tpwidget("show");</script>
+
+  <title>nginx负载均衡实现（nginx+php+mysql）实战 | Linux 运维</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="default">
+  
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+	
+	<a href="https://sugarsir.github.io"><img style="position: absolute; top: 0; right: 0; border: 0
+	;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Linux 运维</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            Search
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="Searching..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/22/nginx 负载均衡实战 /">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="sugarsir">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/uploads/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Linux 运维">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">nginx负载均衡实现（nginx+php+mysql）实战</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-02-22T08:49:18+08:00">
+                2019-02-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/nginx/" itemprop="url" rel="index">
+                    <span itemprop="name">nginx</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-wordcount">
+              
+                
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Words count in article&#58;</span>
+                
+                <span title="Words count in article">
+                  
+                </span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Reading time &asymp;</span>
+                
+                <span title="Reading time">
+                  
+                </span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>准备三个文件[my.cnf、二进制编译文件mysql-5.6.34-linux-glibc2.5-x86_64.tar.gz、mysql-install.sh]</p>
+<p>1、vim my.cnf</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[mysqld]</span><br><span class="line">socket=/var/lib/mysql/mysql.sock</span><br><span class="line">user=mysql</span><br><span class="line">symbolic-links=0</span><br><span class="line">datadir=/data/mysql</span><br><span class="line">innodb_file_per_table=1</span><br><span class="line"></span><br><span class="line">[client]</span><br><span class="line">port=3306</span><br><span class="line">socket=/var/lib/mysql/mysql.sock</span><br><span class="line"></span><br><span class="line">[mysqld_safe]</span><br><span class="line"><span class="built_in">log</span>-error=/var/<span class="built_in">log</span>/mysqld.log</span><br><span class="line">pid-file=/tmp/mysql.sock</span><br></pre></td></tr></table></figure>
+<p>2、vim mysql-install.sh</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line">DIR=`<span class="built_in">pwd</span>`</span><br><span class="line">NAME=<span class="string">"mysql-5.6.34-linux-glibc2.5-x86_64.tar.gz"</span></span><br><span class="line">yum install curl policycoreutils openssh-server openssh-clients postfix -y</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ -f <span class="variable">$&#123;FULL_NAME&#125;</span> ];<span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">"安装文件存在"</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">"安装文件不存在"</span></span><br><span class="line">    <span class="built_in">exit</span> 3</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"><span class="keyword">if</span> [ -h /usr/<span class="built_in">local</span>/mysql ];<span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">"Mysql 已经安装"</span></span><br><span class="line">    <span class="built_in">exit</span> 3</span><br><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line">DIR=`<span class="built_in">pwd</span>`</span><br><span class="line">NAME=<span class="string">"mysql-5.6.34-linux-glibc2.5-x86_64.tar.gz"</span></span><br><span class="line">FULL_NAME=<span class="variable">$&#123;DIR&#125;</span>/<span class="variable">$&#123;NAME&#125;</span></span><br><span class="line">DATA_DIR=<span class="string">"/data/mysql"</span></span><br><span class="line"></span><br><span class="line">yum install vim gcc gcc-c++ wget autoconf  net-tools lrzsz iotop lsof iotop bash-completion -y</span><br><span class="line">yum install curl policycoreutils openssh-server openssh-clients postfix -y</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ -f <span class="variable">$&#123;FULL_NAME&#125;</span> ];<span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">"安装文件存在"</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">"安装文件不存在"</span></span><br><span class="line">    <span class="built_in">exit</span> 3</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"><span class="keyword">if</span> [ -h /usr/<span class="built_in">local</span>/mysql ];<span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">"Mysql 已经安装"</span></span><br><span class="line">    <span class="built_in">exit</span> 3</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    tar xvf <span class="variable">$&#123;FULL_NAME&#125;</span>   -C /usr/<span class="built_in">local</span>/src</span><br><span class="line">    ln -sv /usr/<span class="built_in">local</span>/src/mysql-5.6.34-linux-glibc2.5-x86_64  /usr/<span class="built_in">local</span>/mysql</span><br><span class="line">    <span class="keyword">if</span> id  mysql;<span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">"mysql 用户已经存在，跳过创建用户过程"</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">        useradd  mysql  -s /sbin/nologin</span><br><span class="line">    <span class="keyword">if</span>  id  mysql;<span class="keyword">then</span></span><br><span class="line">[root@mysql src]<span class="comment">#cat mysql-install.sh </span></span><br><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line">DIR=`<span class="built_in">pwd</span>`</span><br><span class="line">NAME=<span class="string">"mysql-5.6.34-linux-glibc2.5-x86_64.tar.gz"</span></span><br><span class="line">FULL_NAME=<span class="variable">$&#123;DIR&#125;</span>/<span class="variable">$&#123;NAME&#125;</span></span><br><span class="line">DATA_DIR=<span class="string">"/data/mysql"</span></span><br><span class="line"></span><br><span class="line">yum install vim gcc gcc-c++ wget autoconf  net-tools lrzsz iotop lsof iotop bash-completion -y</span><br><span class="line">yum install curl policycoreutils openssh-server openssh-clients postfix -y</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> [ -f <span class="variable">$&#123;FULL_NAME&#125;</span> ];<span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">"安装文件存在"</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">"安装文件不存在"</span></span><br><span class="line">    <span class="built_in">exit</span> 3</span><br><span class="line"><span class="keyword">fi</span></span><br><span class="line"><span class="keyword">if</span> [ -h /usr/<span class="built_in">local</span>/mysql ];<span class="keyword">then</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="string">"Mysql 已经安装"</span></span><br><span class="line">    <span class="built_in">exit</span> 3 </span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    tar xvf <span class="variable">$&#123;FULL_NAME&#125;</span>   -C /usr/<span class="built_in">local</span>/src</span><br><span class="line">    ln -sv /usr/<span class="built_in">local</span>/src/mysql-5.6.34-linux-glibc2.5-x86_64  /usr/<span class="built_in">local</span>/mysql</span><br><span class="line">    <span class="keyword">if</span> id  mysql;<span class="keyword">then</span></span><br><span class="line">        <span class="built_in">echo</span> <span class="string">"mysql 用户已经存在，跳过创建用户过程"</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line">        useradd  mysql  -s /sbin/nologin</span><br><span class="line">    <span class="keyword">if</span>  id  mysql;<span class="keyword">then</span></span><br><span class="line">        chown  -R mysql.mysql  /usr/<span class="built_in">local</span>/mysql/* -R</span><br><span class="line">        <span class="keyword">if</span> [ ! -d  /data/mysql ];<span class="keyword">then</span></span><br><span class="line">            mkdir -pv /data/mysql &amp;&amp; chown  -R mysql.mysql  /data   -R</span><br><span class="line">            /usr/<span class="built_in">local</span>/mysql/scripts/mysql_install_db  --user=mysql --datadir=/data/mysql  --basedir=/usr/<span class="built_in">local</span>/mysql/</span><br><span class="line">            cp  /usr/<span class="built_in">local</span>/src/mysql-5.6.34-linux-glibc2.5-x86_64/support-files/mysql.server /etc/init.d/mysqld</span><br><span class="line">            chmod a+x /etc/init.d/mysqld</span><br><span class="line">            cp <span class="variable">$&#123;DIR&#125;</span>/my.cnf   /etc/my.cnf</span><br><span class="line">            ln -sv /usr/<span class="built_in">local</span>/mysql/bin/mysql  /usr/bin/mysql</span><br><span class="line">            /etc/init.d/mysqld start</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            <span class="built_in">echo</span> <span class="string">"MySQL数据目录已经存在,"</span></span><br><span class="line">                        <span class="built_in">exit</span> 3</span><br><span class="line">        <span class="keyword">fi</span></span><br><span class="line">    <span class="keyword">fi</span></span><br><span class="line"><span class="keyword">fi</span></span><br></pre></td></tr></table></figure>
+<p>准备两台虚拟机，ip分别为（主：192.168.183.148、从：192.168.183.153）</p>
+<p>把上述三个文件放在两台虚拟机的<code>/usr/local/src</code>目录里，运行脚本自动安装mysql</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@sql-master ~]<span class="comment">#bash mysql-install.sh</span></span><br><span class="line">[root@sql-master ~]<span class="comment">#mysql</span></span><br></pre></td></tr></table></figure>
+<h1 id="配置主从"><a href="#配置主从" class="headerlink" title="配置主从"></a>配置主从</h1><p>1.1：更改Master和Slave的my.conf文件，主要将id改为不一样：</p>
+<p>1.1.1：Master的配置my.conf文件，更改完成重启MySQL服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">[root@sql-master ~]<span class="comment"># cat /etc/my.cnf</span></span><br><span class="line">[mysqld]</span><br><span class="line">socket=/var/lib/mysql/mysql.sock</span><br><span class="line">user=mysql</span><br><span class="line">symbolic-links=0</span><br><span class="line">datadir=/data/mysql</span><br><span class="line">innodb_file_per_table=1</span><br><span class="line"><span class="comment">#增加这两行</span></span><br><span class="line">server-id=1</span><br><span class="line"><span class="built_in">log</span>-bin=/data/mysql/master-log</span><br><span class="line"></span><br><span class="line">[client]</span><br><span class="line">port=3306</span><br><span class="line">socket=/var/lib/mysql/mysql.sock</span><br><span class="line"></span><br><span class="line">[mysqld_safe]</span><br><span class="line"><span class="built_in">log</span>-error=/var/<span class="built_in">log</span>/mysqld.log</span><br><span class="line">pid-file=/tmp/mysql.sock</span><br><span class="line"></span><br><span class="line">[root@sql-master ~]<span class="comment">#/etc/init.d/mysqld restart</span></span><br></pre></td></tr></table></figure>
+<p>1.1.2：Slave的my.cnf配置文件，更改完成重启MySQL服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">[root@sql-slave ~]<span class="comment"># cat /etc/my.cnf</span></span><br><span class="line">[mysqld]</span><br><span class="line">socket=/var/lib/mysql/mysql.sock</span><br><span class="line">user=mysql</span><br><span class="line">symbolic-links=0</span><br><span class="line">datadir=/data/mysql</span><br><span class="line">innodb_file_per_table=1</span><br><span class="line"><span class="comment">#增加这三行</span></span><br><span class="line"><span class="built_in">read</span>-only</span><br><span class="line">relay-log = /data/mysql <span class="comment">#中级日志的路径</span></span><br><span class="line">server-id=2  <span class="comment">#server id与Master不能一样</span></span><br><span class="line"></span><br><span class="line">[client]</span><br><span class="line">port=3306</span><br><span class="line">socket=/var/lib/mysql/mysql.sock</span><br><span class="line"></span><br><span class="line">[mysqld_safe]</span><br><span class="line"><span class="built_in">log</span>-error=/var/<span class="built_in">log</span>/mysqld.log</span><br><span class="line">pid-file=/tmp/mysql.sock</span><br><span class="line"></span><br><span class="line">[root@sql-master ~]<span class="comment">#/etc/init.d/mysqld restart</span></span><br></pre></td></tr></table></figure>
+<p>1.1.3：在 Master生成简单数据：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; create database testdatabase; <span class="comment">#创建库</span></span><br><span class="line">Query OK, 1 row affected (0.00 sec)</span><br><span class="line"> </span><br><span class="line">mysql&gt; use testdatabase; <span class="comment">#切换库</span></span><br><span class="line">Database changed</span><br><span class="line">mysql&gt; CREATE TABLE testtable (Id_P int,Name varchar(255),Address varchar(255),City varchar(255)); <span class="comment">#创建表</span></span><br><span class="line">Query OK, 0 rows affected (0.47 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; show tables; <span class="comment">#查看表</span></span><br><span class="line">+------------------------+</span><br><span class="line">| Tables_in_testdatabase |</span><br><span class="line">+------------------------+</span><br><span class="line">| testtable              |</span><br><span class="line">+------------------------+</span><br><span class="line">1 row <span class="keyword">in</span> <span class="built_in">set</span> (0.01 sec)</span><br><span class="line">mysql&gt; INSERT INTO testtable VALUES (1,<span class="string">"Jack"</span>,<span class="string">"China"</span>,<span class="string">"Beijing"</span>); <span class="comment">#插入数据</span></span><br><span class="line">Query OK, 1 row affected (0.00 sec)</span><br><span class="line">mysql&gt; select * from  testtable; <span class="comment">#插卡数据并验证</span></span><br><span class="line">+------+------+---------+---------+</span><br><span class="line">| Id_P | Name | Address | City    |</span><br><span class="line">+------+------+---------+---------+</span><br><span class="line">|    1 | Jack | China   | Beijing |</span><br><span class="line">+------+------+---------+---------+</span><br><span class="line">1 row <span class="keyword">in</span> <span class="built_in">set</span> (0.00 sec)</span><br><span class="line"></span><br><span class="line"><span class="comment">#创建同步账号</span></span><br><span class="line">mysql&gt;  GRANT REPLICATION SLAVE,REPLICATION CLIENT ON *.* TO <span class="string">'tom'</span>@<span class="string">'192.168.183.%'</span> IDENTIFIED BY <span class="string">'123456'</span>; <span class="comment">#授权tom从192.168.10.*使用密码123456同步数据</span></span><br><span class="line">Query OK, 0 rows affected (0.30 sec)</span><br></pre></td></tr></table></figure>
+<p>1.1.4：Master导出数据、复制到Slave：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root@sql-master ~]<span class="comment">#/usr/local/mysql/bin/mysqldump   --all-databases  --single_transaction --flush-logs --master-data=2 --lock-tables &gt; /backup.sql</span></span><br><span class="line">[root@sql-master ~]<span class="comment">#scp /backup.sql  192.168.183.153:/opt/</span></span><br><span class="line">The authenticity of host <span class="string">'192.168.183.153 (192.168.183.153)'</span> can<span class="string">'t be established.</span></span><br><span class="line"><span class="string">ECDSA key fingerprint is SHA256:9CyePug525QqkrwUQLLfd2+Hq51UQe3JxPPSm/CKN0w.</span></span><br><span class="line"><span class="string">ECDSA key fingerprint is MD5:b8:fa:1b:54:1a:15:18:d7:20:bb:b0:49:01:61:78:14.</span></span><br><span class="line"><span class="string">Are you sure you want to continue connecting (yes/no)? yes</span></span><br><span class="line"><span class="string">Warning: Permanently added '</span>192.168.183.153<span class="string">' (ECDSA) to the list of known hosts.</span></span><br><span class="line"><span class="string">root@192.168.183.153'</span>s password: </span><br><span class="line">backup.sql                100%  637KB  39.3MB/s   00:00</span><br></pre></td></tr></table></figure>
+<p>1.1.5：Slave将sql文件导入并记录Master的日志文件名称和要同步的位置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">[root@sql-slave ~]<span class="comment">#/usr/local/mysql/bin/mysql &lt; /opt/backup.sql</span></span><br><span class="line">[root@sql-slave ~]<span class="comment">#head -n 30 /opt/backup.sql </span></span><br><span class="line">-- MySQL dump 10.13  Distrib 5.6.34, <span class="keyword">for</span> linux-glibc2.5 (x86_64)</span><br><span class="line">--</span><br><span class="line">-- Host: localhost    Database: </span><br><span class="line">-- ------------------------------------------------------</span><br><span class="line">-- Server version       5.6.34-log</span><br><span class="line"></span><br><span class="line">/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;</span><br><span class="line">/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;</span><br><span class="line">/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;</span><br><span class="line">/*!40101 SET NAMES utf8 */;</span><br><span class="line">/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;</span><br><span class="line">/*!40103 SET TIME_ZONE=<span class="string">'+00:00'</span> */;</span><br><span class="line">/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;</span><br><span class="line">/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;</span><br><span class="line">/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE=<span class="string">'NO_AUTO_VALUE_ON_ZERO'</span> */;</span><br><span class="line">/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;</span><br><span class="line"></span><br><span class="line">--</span><br><span class="line">-- Position to start replication or point-in-time recovery from</span><br><span class="line">--</span><br><span class="line"></span><br><span class="line">-- CHANGE MASTER TO MASTER_LOG_FILE=<span class="string">'master-log.000002'</span>, MASTER_LOG_POS=120;    <span class="comment">#下面chang master to 需要</span></span><br><span class="line"></span><br><span class="line">--</span><br><span class="line">-- Current Database: `mysql`</span><br><span class="line">--</span><br><span class="line"></span><br><span class="line">CREATE DATABASE /*!32312 IF NOT EXISTS*/ `mysql` /*!40100 DEFAULT CHARACTER SET latin1 */;</span><br><span class="line"></span><br><span class="line">USE `mysql`;</span><br></pre></td></tr></table></figure>
+<p>1.1.6：在Slave配置从Master同步</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[root@sql-slave ~]<span class="comment">#mysql</span></span><br><span class="line">Welcome to the MariaDB monitor.  Commands end with ; or \g.</span><br><span class="line">Your MySQL connection id is 2</span><br><span class="line">Server version: 5.6.34 MySQL Community Server (GPL)</span><br><span class="line"></span><br><span class="line">Copyright (c) 2000, 2017, Oracle, MariaDB Corporation Ab and others.</span><br><span class="line"></span><br><span class="line">Type <span class="string">'help;'</span> or <span class="string">'\h'</span> <span class="keyword">for</span> <span class="built_in">help</span>. Type <span class="string">'\c'</span> to clear the current input statement.</span><br><span class="line"></span><br><span class="line">MySQL [(none)]&gt; CHANGE MASTER TO    MASTER_HOST=<span class="string">'192.168.183.148'</span>,MASTER_USER=<span class="string">'tom'</span>,MASTER_PASSWORD=<span class="string">'123456'</span>,MASTER_LOG_FILE=<span class="string">'master-log.000002'</span>,MASTER_LOG_POS=120;</span><br><span class="line">Query OK, 0 rows affected, 2 warnings (0.04 sec)</span><br><span class="line"></span><br><span class="line">MySQL [(none)]&gt; start slave;</span><br><span class="line">Query OK, 0 rows affected (0.03 sec)</span><br></pre></td></tr></table></figure>
+<p>1.1.7：验证Slave的IO线程与SQL线程是OK的:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show slave status\G;</span><br><span class="line">*************************** 1. row ***************************</span><br><span class="line">               Slave_IO_State: Waiting <span class="keyword">for</span> master to send event</span><br><span class="line">                  Master_Host: 192.168.183.148</span><br><span class="line">                  Master_User: tom</span><br><span class="line">                  Master_Port: 3306</span><br><span class="line">                Connect_Retry: 60</span><br><span class="line">              Master_Log_File: master-log.000002</span><br><span class="line">          Read_Master_Log_Pos: 120</span><br><span class="line">               Relay_Log_File: mysql.000002</span><br><span class="line">                Relay_Log_Pos: 284</span><br><span class="line">        Relay_Master_Log_File: master-log.000002</span><br><span class="line">             Slave_IO_Running: Yes <span class="comment">#这两个线程状态必须为YES才表示同步是成功的</span></span><br><span class="line">            Slave_SQL_Running: Yes</span><br><span class="line">              Replicate_Do_DB: </span><br><span class="line">          Replicate_Ignore_DB: </span><br><span class="line">           Replicate_Do_Table: </span><br><span class="line">       Replicate_Ignore_Table: </span><br><span class="line">      Replicate_Wild_Do_Table: </span><br><span class="line">  Replicate_Wild_Ignore_Table: </span><br><span class="line">                   Last_Errno: 0</span><br><span class="line">                   Last_Error: </span><br><span class="line">                 Skip_Counter: 0</span><br><span class="line">          Exec_Master_Log_Pos: 120</span><br><span class="line">              Relay_Log_Space: 447</span><br><span class="line">              Until_Condition: None</span><br><span class="line">               Until_Log_File: </span><br><span class="line">                Until_Log_Pos: 0</span><br><span class="line">           Master_SSL_Allowed: No</span><br><span class="line">           Master_SSL_CA_File: </span><br><span class="line">           Master_SSL_CA_Path: </span><br><span class="line">              Master_SSL_Cert: </span><br><span class="line">            Master_SSL_Cipher: </span><br><span class="line">               Master_SSL_Key: </span><br><span class="line">        Seconds_Behind_Master: 0 <span class="comment">#表示从Master收到的bin-log到当前的同步位置差多少秒，不是严格意义的主从差多少秒，因为Master的bin-log更新以后可能还没有同步到Slave</span></span><br><span class="line">Master_SSL_Verify_Server_Cert: No</span><br><span class="line">                Last_IO_Errno: 0</span><br><span class="line">                Last_IO_Error: </span><br><span class="line">               Last_SQL_Errno: 0</span><br><span class="line">               Last_SQL_Error: </span><br><span class="line">  Replicate_Ignore_Server_Ids: </span><br><span class="line">             Master_Server_Id: 1</span><br><span class="line">                  Master_UUID: 1d578174-1544-11e9-ad87-000c29307938</span><br><span class="line">             Master_Info_File: /data/mysql/master.info</span><br><span class="line">                    SQL_Delay: 0</span><br><span class="line">          SQL_Remaining_Delay: NULL</span><br><span class="line">      Slave_SQL_Running_State: Slave has <span class="built_in">read</span> all relay <span class="built_in">log</span>; waiting <span class="keyword">for</span> the slave I/O thread to update it</span><br><span class="line">           Master_Retry_Count: 86400</span><br><span class="line">                  Master_Bind: </span><br><span class="line">      Last_IO_Error_Timestamp: </span><br><span class="line">     Last_SQL_Error_Timestamp: </span><br><span class="line">               Master_SSL_Crl: </span><br><span class="line">           Master_SSL_Crlpath: </span><br><span class="line">           Retrieved_Gtid_Set: </span><br><span class="line">            Executed_Gtid_Set: </span><br><span class="line">                Auto_Position: 0</span><br><span class="line">1 row <span class="keyword">in</span> <span class="built_in">set</span> (0.00 sec)</span><br></pre></td></tr></table></figure>
+<p>1.1.8：在Master插入数据：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">[root@mysql ~]<span class="comment">#mysql</span></span><br><span class="line">Welcome to the MySQL monitor.  Commands end with ; or \g.</span><br><span class="line">Your MySQL connection id is 6</span><br><span class="line">Server version: 5.6.34-log MySQL Community Server (GPL)</span><br><span class="line"></span><br><span class="line">Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.</span><br><span class="line"></span><br><span class="line">Oracle is a registered trademark of Oracle Corporation and/or its</span><br><span class="line">affiliates. Other names may be trademarks of their respective</span><br><span class="line">owners.</span><br><span class="line"></span><br><span class="line">Type <span class="string">'help;'</span> or <span class="string">'\h'</span> <span class="keyword">for</span> <span class="built_in">help</span>. Type <span class="string">'\c'</span> to clear the current input statement.</span><br><span class="line"></span><br><span class="line">mysql&gt; use testdatabase;</span><br><span class="line">Reading table information <span class="keyword">for</span> completion of table and column names</span><br><span class="line">You can turn off this feature to get a quicker startup with -A</span><br><span class="line"></span><br><span class="line">Database changed</span><br><span class="line">mysql&gt; select * from  testtable;</span><br><span class="line">+------+------+---------+---------+</span><br><span class="line">| Id_P | Name | Address | City    |</span><br><span class="line">+------+------+---------+---------+</span><br><span class="line">|    1 | Jack | China   | Beijing |</span><br><span class="line">+------+------+---------+---------+</span><br><span class="line">1 row <span class="keyword">in</span> <span class="built_in">set</span> (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; INSERT INTO testtable VALUES (2,<span class="string">"tom"</span>,<span class="string">"China"</span>,<span class="string">"hainan"</span>);</span><br><span class="line">Query OK, 1 row affected (0.03 sec)</span><br><span class="line">mysql&gt; select * from  testtable;</span><br><span class="line">+------+------+---------+---------+</span><br><span class="line">| Id_P | Name | Address | City    |</span><br><span class="line">+------+------+---------+---------+</span><br><span class="line">|    1 | Jack | China   | Beijing |</span><br><span class="line">|    2 | tom  | China   | hainan  |</span><br><span class="line">+------+------+---------+---------+</span><br><span class="line">2 rows <span class="keyword">in</span> <span class="built_in">set</span> (0.00 sec)</span><br></pre></td></tr></table></figure>
+<p>1.1.9：在Slave验证数是否同步完成：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">MySQL [testdatabase]&gt; select * from  testtable;</span><br><span class="line">+------+------+---------+---------+</span><br><span class="line">| Id_P | Name | Address | City    |</span><br><span class="line">+------+------+---------+---------+</span><br><span class="line">|    1 | Jack | China   | Beijing |</span><br><span class="line">|    2 | tom  | China   | hainan  |</span><br><span class="line">+------+------+---------+---------+</span><br><span class="line">2 rows <span class="keyword">in</span> <span class="built_in">set</span> (0.00 sec)</span><br></pre></td></tr></table></figure>
+<p>准备172.18.139.69，172.18.139.57  nginx+php<br>    编译安装PHP：<br>    <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y gcc gcc-c++  make zlib zlib-devel pcre pcre-devel  libjpeg libjpeg-devel libpng libpng-devel freetype freetype-devel libxml2 libxml2-devel glibc glibc-devel glib2 glib2-devel bzip2 bzip2-devel ncurses ncurses-devel curl curl-devel e2fsprogs e2fsprogs-devel krb5 krb5-devel openssl openssl-devel openldap openldap-devel nss_ldap openldap-clients openldap-servers</span><br></pre></td></tr></table></figure></p>
+<pre><code><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum -y install wget vim pcre pcre-devel openssl openssl-devel libicu-devel gcc gcc-c++ autoconf libjpeg libjpeg-devel libpng libpng-devel freetype freetype-devel libxml2 libxml2-devel zlib zlib-devel glibc glibc-devel glib2 glib2-devel ncurses ncurses-devel curl curl-devel krb5-devel libidn libidn-devel openldap openldap-devel nss_ldap jemalloc-devel cmake boost-devel bison automake libevent libevent-devel gd gd-devel libtool* libmcrypt libmcrypt-devel mcrypt mhash libxslt libxslt-devel readline readline-devel gmp gmp-devel libcurl libcurl-devel openjpeg-devel</span><br></pre></td></tr></table></figure>
+
+
+useradd  -s /sbin/nologin  wwww
+
+编译安装PHP：
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./configure  --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --with-config-file-scan-dir=/usr/local/php/etc/conf.d --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-pear --with-curl  --with-png-dir --with-freetype-dir --with-iconv   --with-mhash   --with-zlib --with-xmlrpc --with-xsl --with-openssl  --with-mysqli --with-pdo-mysql --disable-debug --enable-zip --enable-sockets --enable-soap   --enable-inline-optimization  --enable-xml --enable-ftp --enable-exif --enable-wddx --enable-bcmath --enable-calendar   --enable-shmop --enable-dba --enable-sysvsem --enable-sysvshm --enable-sysvmsg</span><br></pre></td></tr></table></figure>
+
+make &amp;&amp; make install
+
+make &amp;&amp; make install
+
+pwd
+/usr/local/php/etc/php-fpm.d
+cp www.conf.default  www.conf
+
+
+cd /usr/local/src
+tar xvf nginx-1.14.2.tar.gz
+cd nginx-1.14.2
+
+编译安装Nginx
+ ./configure --prefix=/usr/local/nginx  --with-pcre  --with-http_stub_status_module --with-http_ssl_module
+
+make &amp;&amp; make install
+
+
+配置Nginx web目录：
+mkdir /data/nginx/wordpress –p
+chown  www.www /usr/local/nginx/ /data/nginx/ -R
+
+ location / {
+            root   /data/nginx/wordpress;
+            index   index.php index.html index.htm;
+            if ($http_user_agent ~ &quot;ApacheBench|WebBench|TurnitinBot|Sogou web spider|Grid Service&quot;) {
+                proxy_pass http://www.baidu.com;
+                return 403;
+            }
+        }
+ location ~ \.php$ {
+            root          /data/nginx/wordpress;
+            fastcgi_pass   192.168.7.104:9000;
+            fastcgi_index  index.php;
+            fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+             include        fastcgi_params;
+        }
+
+添加测试页:
+vim /data/nginx/wordpress/index.php
+&lt;?PHP
+  phpinfo.();
+?&gt;
+启动Nginx并访问测试：  
+解压wordpress 到/data/nginx/wordpress
+部署WordPress：
+[root@redis-s4 wordpress]# pwd
+/data/nginx/wordpress
+tar  xvf wordpress-5.0.1-zh_CN.tar.gz
+mv wordpress-5.0.1-zh_CN.tar.gz  /opt
+cp wp-config-sample.php  wp-config.php 
+
+vim wp-config.php #修改数据库配置
+grep &quot;^[a-Z]&quot; wp-config.php 
+define(&apos;DB_NAME&apos;, &apos;wordpress&apos;);
+define(&apos;DB_USER&apos;, &apos;wordpress&apos;);
+define(&apos;DB_PASSWORD&apos;, &apos;123456&apos;);
+define(&apos;DB_HOST&apos;, &apos;192.168.7.103&apos;);
+define(&apos;DB_CHARSET&apos;, &apos;utf8&apos;);
+define(&apos;DB_COLLATE&apos;, &apos;&apos;);
+define(&apos;AUTH_KEY&apos;,         &apos;zY%A)&lt;+`Qf^68kzMC-)0+bL3m!LADP-PgJ9a~-CLtk*JnJ%-OGDEi/-v*zoJx1gP&apos;);
+define(&apos;SECURE_AUTH_KEY&apos;,  &apos;1muyi_3wR[/&lt;}1-[2/F=Lb3`1c-+o5*!uu4-un-4!iMb!Nl|X=}Ud-&lt;PGxkPpuse&apos;);
+define(&apos;LOGGED_IN_KEY&apos;,    &apos;*%/!SxN}FllpDe4+_Phylp&gt;_^jD]N$Tc9/CstL )yRvLg!+9y #l}1?Da 8}sat{&apos;);
+define(&apos;NONCE_KEY&apos;,        &apos;mTY2Bio ;v4j^%#O&gt;J&amp;@Py[6TaYy+mLmbp7$[=c,l|qY9TPwSH+Kf(!PUmTE9J`c&apos;);
+define(&apos;AUTH_SALT&apos;,        &apos;~:wkxx83`q_+bm|{MH-|CA&lt;`&gt;#JJGitCsed#?a^BSsm{rVC1sg;b:&amp;/:h$f&gt;9D.z&apos;);
+define(&apos;SECURE_AUTH_SALT&apos;, &apos;u%_}v`0L~#&lt;kZ|U +st.]iNTbGq-%Bb)Ti&amp;E&lt;$-LMU6jtEz}X)T$MZ{@S(#DJOQp&apos;);
+define(&apos;LOGGED_IN_SALT&apos;,   &apos;QxUBuWv[GjaGx7=VR|&amp;.i?wTsS-Jr($}p#?y})O-N1*h$gh d cj%H-g2~HV*&amp;ki&apos;);
+define(&apos;NONCE_SALT&apos;,       &apos;&gt;Lx7Vu=&gt;R+O||Ks)cCDGO=+st|Ja&amp;|+5GlR?F{1Vdng-q:f#:{[TIfY#EtP|1k8a&apos;);
+
+测试并启动Nginx：
+[root@redis-s4 wordpress]# /usr/local/nginx/sbin/nginx -t
+nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok
+nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful
+[root@redis-s4 wordpress]# /usr/local/nginx/sbin/nginx
+</code></pre><p>准备nginx 前端调度器 （172.18.139.69）<br>  编译安装nginx 前端调度器<br>  ./configure  –prefix=/usr/local/nginx   –with-stream –with-stream_ssl_module –with-http_stub_status_modulev </p>
+<p>  修改nginx 配置文件</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">[root@node0 src]<span class="comment">#vim /usr/local/nginx/conf/nginx.conf</span></span><br><span class="line"></span><br><span class="line">  stream &#123;</span><br><span class="line"></span><br><span class="line">     upstream mysql &#123;</span><br><span class="line">        server 172.18.139.59:3306;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">     server &#123;</span><br><span class="line">        listen 172.18.139.69:3306;</span><br><span class="line">        proxy_pass mysql;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    upstream web-server &#123;</span><br><span class="line">        server www.sugarsir.com:80;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">[root@node0 src]<span class="comment">#vim /usr/local/nginx/conf/conf.d/blog.conf </span></span><br><span class="line">upstream blogs &#123;</span><br><span class="line"></span><br><span class="line">        server 172.18.139.57 weight=1 max_fails=3 fail_timeout=100s;</span><br><span class="line">        server 172.18.139.68 weight=1 max_fails=3 fail_timeout=100s;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line"></span><br><span class="line">    listen 80;</span><br><span class="line">    server_name www.sugarsir123.com;</span><br><span class="line">    index index.html index.php;</span><br><span class="line">    location / &#123;</span><br><span class="line">        proxy_pass http://blogs;</span><br><span class="line">        proxy_set_header Host <span class="variable">$host</span>;</span><br><span class="line">        proxy_set_header X-Real_IP <span class="variable">$remote_addr</span>;</span><br><span class="line">        proxy_set_header X_Forwarded-For <span class="variable">$proxy_aad_x_forwarded_for</span>;</span><br><span class="line">        proxy_next_upstream http_502 http_504 error timeout invalid_header</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>准备nfs (172.18.139.59)，实现图片资源共享<br>  安装 nfs-utils<br>  yum install nfs-utils -y</p>
+<p>  vim /etc/exports<br>  /nfsdata/images * (rw no_root_squash)</p>
+<p>客户端安装 nfs-utils （172.18.139.69，172.18.139.57）</p>
+<p>  yum install nfs-utils -y</p>
+<p>  showmount -e 172.18.139.59 (查看共享目录)</p>
+<p>挂在共享目录<br>mount -t nfs 172.18.139.59:/nfsdata/images /data/nginx/wordpress/wp-content/uploads  </p>
+<p>mount -t nfs 172.18.139.59:/nfsdata/images /data/nginx/wordpress/wp-content/uploads </p>
+<p> 将该挂在写在配置文件中/etc/rc.d/rc.local 或者 /etc/fstab<br> vim /etc/rc.d/rc.local<br> mount -t nfs 172.18.139.59:/nfsdata/images /data/nginx/wordpress/wp-content/uploads </p>
+
+      
+    </div>
+    
+    
+    
+
+  <div style="text-align:center;color: #ccc;font-size:14px;">---------------- The End ----------------</div>
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>Donate</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt="sugarsir WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="sugarsir Alipay">
+        <p>Alipay</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/nginx/" rel="tag"><i class="fa fa-tag"></i> nginx</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/02/21/redis高可用与集群/" rel="next" title="redis高可用与集群">
+                <i class="fa fa-chevron-left"></i> redis高可用与集群
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/uploads/avatar.gif" alt="sugarsir">
+            
+              <p class="site-author-name" itemprop="name">sugarsir</p>
+              <p class="site-description motion-element" itemprop="description">海阔凭鱼跃，天高任鸟飞</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">25</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">43</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#配置主从"><span class="nav-number">1.</span> <span class="nav-text">配置主从</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">sugarsir</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+      <span class="post-meta-item-text">Site words total count&#58;</span>
+    
+    <span title="Site words total count"></span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+<div>
+<!-- 填写你的友盟代码 -->
+<script type="text/javascript">var cnzz_protocol = (("https:" == document.location.protocol) ? "https://" : "http://");document.write(unescape("%3Cspan id='cnzz_stat_icon_1276087848'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s5.cnzz.com/z_stat.php%3Fid%3D1276087848%26online%3D1%26show%3Dline' type='text/javascript'%3E%3C/script%3E"));</script>
+<!-- 你的友盟代码 end -->
+</div>
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+  <!-- 雪花特效 -->
+  <script type="text/javascript">
+    var windowWidth = $(window).width();
+    if (windowWidth > 480) {
+      document.write('<script type="text/javascript" src="/js/src/snow.js"><\/script>');
+      }
+  </script>
+  
+</body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/clicklove.js"></script>
